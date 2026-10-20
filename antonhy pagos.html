@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Pagá con alias</title>
+<style>
+  /* ====== Lyvora NFC · Placa de pagos ====== */
+  :root{
+    --bg:#0B0B0F; --card:#16161C; --line:#2A2A33; --text:#F5F5F7; --muted:#B4B4BE;
+    --ok:#2EE59D; --accent:#FFD23F;
+    --rainbow:linear-gradient(90deg,#2378E8,#8E44AD,#E74C3C,#F39C12,#F5C211,#3BAA4F);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:460px;margin:0 auto;padding:20px 16px 32px;min-height:100vh;display:flex;flex-direction:column;gap:18px}
+  .bar{height:10px;border-radius:6px;background:var(--rainbow)}
+  .brand{font-size:22px;font-weight:800;line-height:1.15;text-align:center;margin:6px 0 0}
+  .sub{font-size:15px;color:var(--muted);text-align:center;margin:-8px 0 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
+  .label{font-size:12px;letter-spacing:2.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .alias{font-size:clamp(24px,8vw,32px);font-weight:800;word-break:break-all;line-height:1.15;
+    background:#0F0F14;border:2px dashed #3A3A46;border-radius:14px;padding:16px 14px;text-align:center;
+    user-select:all;-webkit-user-select:all}
+  button.copy{appearance:none;border:0;border-radius:14px;min-height:58px;width:100%;
+    font-size:19px;font-weight:800;background:var(--ok);color:#0B0B0F;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s}
+  button.copy:active{transform:scale(.98)}
+  button.copy.done{background:#FFFFFF}
+  .owner{display:flex;gap:12px;align-items:flex-start;background:#1E1A0B;border:1px solid #5A4A12;border-radius:14px;padding:12px 14px}
+  .owner p{margin:0;font-size:15px;line-height:1.4}
+  .owner b{color:var(--accent);font-size:17px}
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .steps li{display:flex;gap:12px;align-items:center;font-size:16px;line-height:1.35}
+  .num{flex:0 0 32px;height:32px;border-radius:16px;background:#26262E;color:var(--text);font-weight:800;
+    display:flex;align-items:center;justify-content:center;font-size:15px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tabs button{appearance:none;border:1px solid var(--line);background:#101015;color:var(--text);
+    border-radius:999px;padding:10px 14px;font-size:14px;font-weight:700;min-height:44px;cursor:pointer}
+  .tabs button[aria-pressed="true"]{background:var(--text);color:#0B0B0F;border-color:var(--text)}
+  .foot{margin-top:auto;text-align:center;font-size:12px;color:#7C7C88}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:#FFFFFF;color:#0B0B0F;font-weight:800;padding:12px 18px;border-radius:999px;
+    transition:all .2s;pointer-events:none;font-size:15px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="bar" aria-hidden="true"></div>
+
+  <h1 class="brand" id="negocio">Pagá con alias</h1>
+  <p class="sub">Copiá el alias y pegalo en tu banco. Sin escribir, sin errores.</p>
+
+  <section class="card" aria-labelledby="lbl">
+    <!-- Si hay más de un alias, aparecen botones para elegir -->
+    <div class="tabs" id="tabs" role="group" aria-label="Elegí el alias" hidden></div>
+
+    <div class="label" id="lbl">Alias</div>
+    <div class="alias" id="alias">—</div>
+
+    <button class="copy" id="btnCopy" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      <span id="btnTxt">Copiar alias</span>
+    </button>
+
+    <div class="owner" id="ownerBox">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <p>Antes de enviar, fijate que el titular diga:<br><b id="owner">—</b></p>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Cómo pagar">
+    <ol class="steps">
+      <li><span class="num">1</span><span>Tocá <b>Copiar alias</b></span></li>
+      <li><span class="num">2</span>Abrí la app de tu banco o billetera</li>
+      <li><span class="num">3</span>En “Transferir”, pegá el alias</li>
+      <li><span class="num">4</span>Verificá el titular, poné el monto y enviá</li>
+    </ol>
+  </section>
+
+  <p class="foot">Placa inteligente by Lyvora NFC</p>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">¡Alias copiado! Ahora pegalo en tu banco</div>
+
+<script>
+/* =====================================================
+   CONFIGURACIÓN — lo único que se cambia por cliente
+   ===================================================== */
+const CONFIG = {
+  negocio: "Pagá con alias",          // ej: "Almacén Don Pepe"
+  cuentas: [
+    { alias: "Antonhy.lemon", titular: "Antonhy" }
+    // Para más alias, agregá líneas así:
+    // { alias: "otro.alias.mp", titular: "María López" },
+  ]
+};
+/* ===================================================== */
+
+(function(){
+  const $ = (id) => document.getElementById(id);
+  let actual = 0;
+
+  $("negocio").textContent = CONFIG.negocio;
+  document.title = CONFIG.negocio;
+
+  function mostrar(i){
+    actual = i;
+    const c = CONFIG.cuentas[i];
+    $("alias").textContent = c.alias;
+    $("owner").textContent = c.titular;
+    $("ownerBox").hidden = !c.titular;
+    $("btnTxt").textContent = "Copiar alias";
+    $("btnCopy").classList.remove("done");
+    document.querySelectorAll("#tabs button").forEach((b,k)=>b.setAttribute("aria-pressed", k===i ? "true" : "false"));
+  }
+
+  if (CONFIG.cuentas.length > 1){
+    const tabs = $("tabs");
+    tabs.hidden = false;
+    CONFIG.cuentas.forEach((c,i)=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = c.titular || ("Alias " + (i+1));
+      b.addEventListener("click", ()=>mostrar(i));
+      tabs.appendChild(b);
+    });
+  }
+
+  function copiaFallback(txt){
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.setAttribute("readonly","");
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length);
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function avisar(ok){
+    const t = $("toast");
+    t.textContent = ok ? "¡Alias copiado! Ahora pegalo en tu banco" : "Mantené apretado el alias para copiarlo";
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"), 2600);
+    if (ok){
+      $("btnTxt").textContent = "¡Copiado! ✓";
+      $("btnCopy").classList.add("done");
+      if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+    }
+  }
+
+  $("btnCopy").addEventListener("click", async ()=>{
+    const txt = CONFIG.cuentas[actual].alias;
+    let ok = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(txt); ok = true;
+      }
+    } catch(e) {}
+    if (!ok) ok = copiaFallback(txt);
+    avisar(ok);
+  });
+
+  mostrar(0);
+})();
+</script>
+</body>
+</html>
