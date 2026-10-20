@@ -4,99 +4,151 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#08080C">
 <title>Pagá con alias</title>
 <style>
-  /* ====== Lyvora NFC · Placa de pagos ====== */
   :root{
-    --bg:#0B0B0F; --card:#16161C; --line:#2A2A33; --text:#F5F5F7; --muted:#B4B4BE;
-    --ok:#2EE59D; --accent:#FFD23F;
+    --bg:#08080C; --glass:rgba(255,255,255,.055); --glass2:rgba(255,255,255,.08);
+    --stroke:rgba(255,255,255,.10); --text:#F6F6F8; --muted:#A9A9B6; --ok:#2EE59D; --warn:#FFD23F;
     --rainbow:linear-gradient(90deg,#2378E8,#8E44AD,#E74C3C,#F39C12,#F5C211,#3BAA4F);
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
   html,body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased}
-  .wrap{max-width:460px;margin:0 auto;padding:20px 16px 32px;min-height:100vh;display:flex;flex-direction:column;gap:18px}
-  .bar{height:10px;border-radius:6px;background:var(--rainbow)}
-  .brand{font-size:22px;font-weight:800;line-height:1.15;text-align:center;margin:6px 0 0}
-  .sub{font-size:15px;color:var(--muted);text-align:center;margin:-8px 0 0}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
-  .label{font-size:12px;letter-spacing:2.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
-  .alias{font-size:clamp(24px,8vw,32px);font-weight:800;word-break:break-all;line-height:1.15;
-    background:#0F0F14;border:2px dashed #3A3A46;border-radius:14px;padding:16px 14px;text-align:center;
-    user-select:all;-webkit-user-select:all}
-  button.copy{appearance:none;border:0;border-radius:14px;min-height:58px;width:100%;
-    font-size:19px;font-weight:800;background:var(--ok);color:#0B0B0F;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .08s}
-  button.copy:active{transform:scale(.98)}
-  button.copy.done{background:#FFFFFF}
-  .owner{display:flex;gap:12px;align-items:flex-start;background:#1E1A0B;border:1px solid #5A4A12;border-radius:14px;padding:12px 14px}
-  .owner p{margin:0;font-size:15px;line-height:1.4}
-  .owner b{color:var(--accent);font-size:17px}
-  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-  .steps li{display:flex;gap:12px;align-items:center;font-size:16px;line-height:1.35}
-  .num{flex:0 0 32px;height:32px;border-radius:16px;background:#26262E;color:var(--text);font-weight:800;
-    display:flex;align-items:center;justify-content:center;font-size:15px}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .tabs button{appearance:none;border:1px solid var(--line);background:#101015;color:var(--text);
-    border-radius:999px;padding:10px 14px;font-size:14px;font-weight:700;min-height:44px;cursor:pointer}
-  .tabs button[aria-pressed="true"]{background:var(--text);color:#0B0B0F;border-color:var(--text)}
-  .foot{margin-top:auto;text-align:center;font-size:12px;color:#7C7C88}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;
-    background:#FFFFFF;color:#0B0B0F;font-weight:800;padding:12px 18px;border-radius:999px;
-    transition:all .2s;pointer-events:none;font-size:15px}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  body::before{content:"";position:fixed;inset:-30% -20% auto -20%;height:70vh;z-index:0;pointer-events:none;
+    background:radial-gradient(closest-side at 30% 60%,rgba(35,120,232,.35),transparent 70%),
+               radial-gradient(closest-side at 70% 50%,rgba(142,68,173,.30),transparent 70%),
+               radial-gradient(closest-side at 55% 80%,rgba(59,170,79,.22),transparent 70%);
+    filter:blur(30px)}
+  .wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;min-height:100vh;
+    padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:16px}
+
+  .top{display:flex;align-items:center;justify-content:space-between}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted);
+    padding:7px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--stroke)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--rainbow)}
+  .secure{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+
+  h1{margin:10px 0 0;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-.6px}
+  h1 span{background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{margin:-6px 0 0;font-size:15px;color:var(--muted);line-height:1.4}
+
+  .card{position:relative;border-radius:26px;padding:20px 18px 18px;background:var(--glass);
+    border:1px solid var(--stroke);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .card.main::before{content:"";position:absolute;inset:-1px;border-radius:27px;padding:1.5px;
+    background:var(--rainbow);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;opacity:.9;pointer-events:none}
+
+  .seg{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(0,0,0,.35);margin-bottom:14px;overflow-x:auto}
+  .seg button{flex:1 0 auto;appearance:none;border:0;border-radius:10px;padding:10px 12px;min-height:40px;
+    background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .seg button[aria-pressed="true"]{background:var(--text);color:#0B0B0F}
+
+  .label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .alias{margin:8px 0 16px;font-size:clamp(28px,9.5vw,38px);font-weight:800;letter-spacing:-.4px;
+    line-height:1.1;word-break:break-all;user-select:all;-webkit-user-select:all}
+
+  .copy{position:relative;appearance:none;border:0;width:100%;min-height:62px;border-radius:18px;cursor:pointer;
+    font-size:19px;font-weight:800;color:#06140E;background:var(--ok);
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    box-shadow:0 10px 30px rgba(46,229,157,.28),inset 0 1px 0 rgba(255,255,255,.5);
+    transition:transform .1s ease, background .25s ease, box-shadow .25s ease}
+  .copy:active{transform:scale(.97)}
+  .copy .ico-ok{display:none}
+  .copy.done{background:#FFFFFF;box-shadow:0 10px 30px rgba(255,255,255,.18)}
+  .copy.done .ico-copy{display:none}
+  .copy.done .ico-ok{display:block;animation:pop .35s ease}
+  @keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+  .owner{margin-top:14px;display:flex;align-items:center;gap:14px;border-radius:18px;padding:14px;
+    background:linear-gradient(180deg,rgba(255,210,63,.13),rgba(255,210,63,.05));border:1px solid rgba(255,210,63,.35)}
+  .avatar{flex:0 0 46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:17px;color:#0B0B0F;background:var(--warn)}
+  .owner small{display:flex;align-items:center;gap:6px;font-size:13px;color:#F3E2A6;line-height:1.3}
+  .owner b{display:block;margin-top:3px;font-size:18px;color:#FFFFFF;line-height:1.2}
+
+  .steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+  .steps li{display:flex;align-items:center;gap:12px;font-size:15.5px;line-height:1.35}
+  .n{flex:0 0 30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;background:var(--glass2);border:1px solid var(--stroke)}
+
+  .foot{margin-top:auto;text-align:center;font-size:12px;color:#6F6F7C;padding-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));z-index:5;
+    transform:translate(-50%,24px);opacity:0;transition:all .25s ease;pointer-events:none;
+    background:rgba(20,20,26,.92);border:1px solid var(--stroke);color:var(--text);
+    padding:12px 16px;border-radius:16px;font-size:14.5px;font-weight:700;display:flex;gap:10px;align-items:center;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);max-width:calc(100% - 32px)}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <main class="wrap">
-  <div class="bar" aria-hidden="true"></div>
+  <div class="top">
+    <span class="pill"><span class="dot" aria-hidden="true"></span><span id="negocio">Pagá con alias</span></span>
+    <span class="secure">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.3 8.3-8 9-4.7-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      Sin errores al escribir
+    </span>
+  </div>
 
-  <h1 class="brand" id="negocio">Pagá con alias</h1>
-  <p class="sub">Copiá el alias y pegalo en tu banco. Sin escribir, sin errores.</p>
+  <h1>Copiá el alias,<br><span>pegalo en tu banco.</span></h1>
+  <p class="lead">No hace falta escribir nada a mano.</p>
 
-  <section class="card" aria-labelledby="lbl">
-    <!-- Si hay más de un alias, aparecen botones para elegir -->
-    <div class="tabs" id="tabs" role="group" aria-label="Elegí el alias" hidden></div>
+  <section class="card main" aria-labelledby="lbl">
+    <div class="seg" id="seg" role="group" aria-label="Elegí el alias" hidden></div>
 
-    <div class="label" id="lbl">Alias</div>
+    <div class="label" id="lbl">Alias para transferir</div>
     <div class="alias" id="alias">—</div>
 
     <button class="copy" id="btnCopy" type="button">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+      <svg class="ico-copy" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15V6a3 3 0 0 1 3-3h9"/></svg>
+      <svg class="ico-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
       <span id="btnTxt">Copiar alias</span>
     </button>
 
     <div class="owner" id="ownerBox">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-      <p>Antes de enviar, fijate que el titular diga:<br><b id="owner">—</b></p>
+      <div class="avatar" id="avatar" aria-hidden="true">—</div>
+      <div>
+        <small>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Antes de enviar, verificá que el titular sea:
+        </small>
+        <b id="owner">—</b>
+      </div>
     </div>
   </section>
 
   <section class="card" aria-label="Cómo pagar">
     <ol class="steps">
-      <li><span class="num">1</span><span>Tocá <b>Copiar alias</b></span></li>
-      <li><span class="num">2</span>Abrí la app de tu banco o billetera</li>
-      <li><span class="num">3</span>En “Transferir”, pegá el alias</li>
-      <li><span class="num">4</span>Verificá el titular, poné el monto y enviá</li>
+      <li><span class="n">1</span><span>Tocá <b>Copiar alias</b></span></li>
+      <li><span class="n">2</span><span>Abrí la app de tu banco o billetera</span></li>
+      <li><span class="n">3</span><span>En <b>Transferir</b>, pegá el alias</span></li>
+      <li><span class="n">4</span><span>Verificá el titular, poné el monto y enviá</span></li>
     </ol>
   </section>
 
   <p class="foot">Placa inteligente by Lyvora NFC</p>
 </main>
 
-<div class="toast" id="toast" role="status" aria-live="polite">¡Alias copiado! Ahora pegalo en tu banco</div>
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+  <span id="toastTxt">¡Copiado! Ahora pegalo en tu banco</span>
+</div>
 
 <script>
 /* =====================================================
    CONFIGURACIÓN — lo único que se cambia por cliente
    ===================================================== */
 const CONFIG = {
-  negocio: "Pagá con alias",          // ej: "Almacén Don Pepe"
+  negocio: "Pagá con alias",              // ej: "Almacén Don Pepe"
   cuentas: [
-    { alias: "Antonhy.lemon", titular: "Antonhy" }
-    // Para más alias, agregá líneas así:
-    // { alias: "otro.alias.mp", titular: "María López" },
+    { alias: "Antonhy.lemon", titular: "Marco Antonio Dos Santos" }
+    // Más alias:  { alias: "otro.alias.mp", titular: "María López" },
   ]
 };
 /* ===================================================== */
@@ -108,26 +160,29 @@ const CONFIG = {
   $("negocio").textContent = CONFIG.negocio;
   document.title = CONFIG.negocio;
 
+  const iniciales = (n) => (n || "").trim().split(/\s+/).filter(Boolean)
+    .filter((w,i,a)=> i===0 || i===a.length-1).map(w=>w[0].toUpperCase()).join("");
+
   function mostrar(i){
     actual = i;
     const c = CONFIG.cuentas[i];
     $("alias").textContent = c.alias;
-    $("owner").textContent = c.titular;
+    $("owner").textContent = c.titular || "";
+    $("avatar").textContent = iniciales(c.titular) || "?";
     $("ownerBox").hidden = !c.titular;
     $("btnTxt").textContent = "Copiar alias";
     $("btnCopy").classList.remove("done");
-    document.querySelectorAll("#tabs button").forEach((b,k)=>b.setAttribute("aria-pressed", k===i ? "true" : "false"));
+    document.querySelectorAll("#seg button").forEach((b,k)=>b.setAttribute("aria-pressed", k===i ? "true" : "false"));
   }
 
   if (CONFIG.cuentas.length > 1){
-    const tabs = $("tabs");
-    tabs.hidden = false;
+    const seg = $("seg"); seg.hidden = false;
     CONFIG.cuentas.forEach((c,i)=>{
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = c.titular || ("Alias " + (i+1));
+      b.textContent = (c.titular || "").split(" ")[0] || ("Alias " + (i+1));
       b.addEventListener("click", ()=>mostrar(i));
-      tabs.appendChild(b);
+      seg.appendChild(b);
     });
   }
 
@@ -136,32 +191,26 @@ const CONFIG = {
     ta.value = txt; ta.setAttribute("readonly","");
     ta.style.position = "fixed"; ta.style.opacity = "0";
     document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length);
-    let ok = false;
-    try { ok = document.execCommand("copy"); } catch(e) {}
-    document.body.removeChild(ta);
-    return ok;
+    let ok = false; try { ok = document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta); return ok;
   }
 
+  let timer;
   function avisar(ok){
-    const t = $("toast");
-    t.textContent = ok ? "¡Alias copiado! Ahora pegalo en tu banco" : "Mantené apretado el alias para copiarlo";
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"), 2600);
+    $("toastTxt").textContent = ok ? "¡Copiado! Ahora pegalo en tu banco" : "Mantené apretado el alias para copiarlo";
+    $("toast").classList.add("show");
+    clearTimeout(timer); timer = setTimeout(()=>$("toast").classList.remove("show"), 2600);
     if (ok){
-      $("btnTxt").textContent = "¡Copiado! ✓";
+      $("btnTxt").textContent = "¡Alias copiado!";
       $("btnCopy").classList.add("done");
-      if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+      if (navigator.vibrate) { try { navigator.vibrate(35); } catch(e){} }
     }
   }
 
   $("btnCopy").addEventListener("click", async ()=>{
     const txt = CONFIG.cuentas[actual].alias;
     let ok = false;
-    try {
-      if (navigator.clipboard && window.isSecureContext){
-        await navigator.clipboard.writeText(txt); ok = true;
-      }
-    } catch(e) {}
+    try { if (navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(txt); ok = true; } } catch(e) {}
     if (!ok) ok = copiaFallback(txt);
     avisar(ok);
   });
