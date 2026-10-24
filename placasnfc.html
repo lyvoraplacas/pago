@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#08080C">
+<title>Pagá con alias</title>
+<style>
+  :root{
+    --bg:#08080C; --glass:rgba(255,255,255,.055); --glass2:rgba(255,255,255,.08);
+    --stroke:rgba(255,255,255,.10); --text:#F6F6F8; --muted:#A9A9B6; --ok:#2EE59D; --warn:#FFD23F; --wa:#25D366;
+    --rainbow:linear-gradient(90deg,#2378E8,#8E44AD,#E74C3C,#F39C12,#F5C211,#3BAA4F);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none!important}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:-30% -20% auto -20%;height:70vh;z-index:0;pointer-events:none;
+    background:radial-gradient(closest-side at 30% 60%,rgba(35,120,232,.35),transparent 70%),
+               radial-gradient(closest-side at 70% 50%,rgba(142,68,173,.30),transparent 70%),
+               radial-gradient(closest-side at 55% 80%,rgba(59,170,79,.22),transparent 70%);
+    filter:blur(30px)}
+  .wrap{position:relative;z-index:1;max-width:440px;margin:0 auto;min-height:100vh;
+    padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:16px}
+
+  /* Encabezado del comercio */
+  .shop{display:flex;align-items:center;gap:14px}
+  .logo{flex:0 0 60px;height:60px;border-radius:18px;padding:2px;background:var(--rainbow)}
+  .logo > *{width:100%;height:100%;border-radius:16px;background:#111117;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:22px;color:#fff;object-fit:cover;overflow:hidden}
+  .shop h2{margin:0;font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-.3px}
+  .shop p{margin:3px 0 0;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+
+  h1{margin:6px 0 0;font-size:29px;line-height:1.08;font-weight:800;letter-spacing:-.6px}
+  h1 span{background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .card{position:relative;border-radius:26px;padding:20px 18px 18px;background:var(--glass);
+    border:1px solid var(--stroke);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .card.main::before{content:"";position:absolute;inset:-1px;border-radius:27px;padding:1.5px;
+    background:var(--rainbow);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;opacity:.9;pointer-events:none}
+
+  .seg{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(0,0,0,.35);margin-bottom:14px;overflow-x:auto}
+  .seg button{flex:1 0 auto;appearance:none;border:0;border-radius:10px;padding:10px 12px;min-height:40px;
+    background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .seg button[aria-pressed="true"]{background:var(--text);color:#0B0B0F}
+
+  .label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .alias{margin:8px 0 16px;font-size:clamp(28px,9.5vw,38px);font-weight:800;letter-spacing:-.4px;
+    line-height:1.1;word-break:break-all;user-select:all;-webkit-user-select:all}
+
+  .btn{position:relative;appearance:none;border:0;width:100%;min-height:62px;border-radius:18px;cursor:pointer;
+    font-size:19px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;
+    transition:transform .1s ease, background .25s ease, box-shadow .25s ease}
+  .btn:active{transform:scale(.97)}
+  .copy{color:#06140E;background:var(--ok);box-shadow:0 10px 30px rgba(46,229,157,.28),inset 0 1px 0 rgba(255,255,255,.5)}
+  .copy .ico-ok{display:none}
+  .copy.done{background:#FFFFFF;box-shadow:0 10px 30px rgba(255,255,255,.18)}
+  .copy.done .ico-copy{display:none}
+  .copy.done .ico-ok{display:block;animation:pop .35s ease}
+  @keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+  .owner{margin-top:14px;display:flex;align-items:center;gap:14px;border-radius:18px;padding:14px;
+    background:linear-gradient(180deg,rgba(255,210,63,.13),rgba(255,210,63,.05));border:1px solid rgba(255,210,63,.35)}
+  .avatar{flex:0 0 46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:17px;color:#0B0B0F;background:var(--warn)}
+  .owner small{display:flex;align-items:center;gap:6px;font-size:13px;color:#F3E2A6;line-height:1.3}
+  .owner b{display:block;margin-top:3px;font-size:18px;color:#FFFFFF;line-height:1.2}
+
+  .steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+  .steps li{display:flex;align-items:center;gap:12px;font-size:15.5px;line-height:1.35}
+  .n{flex:0 0 30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;background:var(--glass2);border:1px solid var(--stroke)}
+
+  .paid h3{margin:0 0 4px;font-size:18px;font-weight:800}
+  .paid p{margin:0 0 14px;font-size:14.5px;color:var(--muted);line-height:1.4}
+  .wa{color:#FFFFFF;background:transparent;border:2px solid var(--wa);font-size:17.5px;min-height:58px}
+  .wa svg{color:var(--wa)}
+
+  .foot{margin-top:auto;text-align:center;font-size:12px;color:#6F6F7C;padding-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));z-index:5;
+    transform:translate(-50%,24px);opacity:0;transition:all .25s ease;pointer-events:none;
+    background:rgba(20,20,26,.92);border:1px solid var(--stroke);color:var(--text);
+    padding:12px 16px;border-radius:16px;font-size:14.5px;font-weight:700;display:flex;gap:10px;align-items:center;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);max-width:calc(100% - 32px)}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- 3) Nombre y logo del comercio -->
+  <header class="shop">
+    <div class="logo" aria-hidden="true"><span id="logoBox">—</span></div>
+    <div>
+      <h2 id="negocio">—</h2>
+      <p>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.3 8.3-8 9-4.7-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        Pago por alias, sin errores al escribir
+      </p>
+    </div>
+  </header>
+
+  <h1>Copiá el alias,<br><span>pegalo en tu banco.</span></h1>
+
+  <section class="card main" aria-labelledby="lbl">
+    <div class="seg" id="seg" role="group" aria-label="Elegí el alias" hidden></div>
+
+    <div class="label" id="lbl">Alias para transferir</div>
+    <div class="alias" id="alias">—</div>
+
+    <button class="btn copy" id="btnCopy" type="button">
+      <svg class="ico-copy" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15V6a3 3 0 0 1 3-3h9"/></svg>
+      <svg class="ico-ok" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      <span id="btnTxt">Copiar alias</span>
+    </button>
+
+    <div class="owner" id="ownerBox">
+      <div class="avatar" id="avatar" aria-hidden="true">—</div>
+      <div>
+        <small>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Antes de enviar, verificá que el titular sea:
+        </small>
+        <b id="owner">—</b>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Cómo pagar">
+    <ol class="steps">
+      <li><span class="n">1</span><span>Tocá <b>Copiar alias</b></span></li>
+      <li><span class="n">2</span><span>Abrí la app de tu banco o billetera</span></li>
+      <li><span class="n">3</span><span>En <b>Transferir</b>, pegá el alias</span></li>
+      <li><span class="n">4</span><span>Verificá el titular, poné el monto y enviá</span></li>
+    </ol>
+  </section>
+
+  <!-- 2) Enviar comprobante por WhatsApp -->
+  <section class="card paid" id="paidBox" aria-labelledby="paidTitle">
+    <h3 id="paidTitle">¿Ya pagaste?</h3>
+    <p>Mandale el comprobante al comercio por WhatsApp. Así confirma tu pago al toque.</p>
+    <a class="btn wa" id="btnWa" href="#" target="_blank" rel="noopener">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
+      Enviar comprobante
+    </a>
+  </section>
+
+  <p class="foot">Placa inteligente by Lyvora NFC</p>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EE59D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+  <span id="toastTxt">¡Copiado! Ahora pegalo en tu banco</span>
+</div>
+
+<script>
+/* =====================================================
+   CONFIGURACIÓN — lo único que se cambia por cliente
+   ===================================================== */
+const CONFIG = {
+  negocio:  "Lyvora NFC",               // nombre del comercio
+  logo:     "logo-lyvora.png",          // imagen subida al repo. Vacío = iniciales
+  whatsapp: "5493741442771",            // WhatsApp del comercio, sin + ni espacios. Vacío = sin botón
+  contador: "",                         // código de GoatCounter, ej: "lyvorapagos". Vacío = sin estadísticas
+  cuentas: [
+    { alias: "Antonhy.lemon", titular: "Marco Antonio Dos Santos" }
+    // Más alias:  { alias: "otro.alias.mp", titular: "María López" },
+  ]
+};
+/* ===================================================== */
+
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const slug = (location.pathname.split("/").pop() || "pago").replace(/\.html?$/,"") || "pago";
+  let actual = 0;
+
+  /* --- 4) Contador de visitas y clics (GoatCounter) --- */
+  function evento(nombre){
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: slug + "-" + nombre, event: true }); } catch(e){}
+  }
+  if (CONFIG.contador){
+    const s = document.createElement("script");
+    s.async = true; s.src = "https://gc.zgo.at/count.js";
+    s.setAttribute("data-goatcounter", "https://" + CONFIG.contador + ".goatcounter.com/count");
+    document.head.appendChild(s);
+  }
+
+  /* --- 3) Comercio --- */
+  const iniciales = (n) => (n || "").trim().split(/\s+/).filter(Boolean)
+    .filter((w,i,a)=> i===0 || i===a.length-1).map(w=>w[0].toUpperCase()).join("");
+  $("negocio").textContent = CONFIG.negocio;
+  document.title = CONFIG.negocio + " · Pagá con alias";
+  if (CONFIG.logo){
+    const img = new Image(); img.alt = ""; img.src = CONFIG.logo;
+    img.onload = () => { $("logoBox").replaceWith(img); };
+  }
+  $("logoBox").textContent = iniciales(CONFIG.negocio) || "$";
+
+  /* --- Alias --- */
+  function linkWa(c){
+    const msg = "Hola! 👋 Te transferí al alias " + c.alias + (c.titular ? " (" + c.titular + ")" : "") + ". Te paso el comprobante 👇";
+    return "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(msg);
+  }
+  function mostrar(i){
+    actual = i;
+    const c = CONFIG.cuentas[i];
+    $("alias").textContent = c.alias;
+    $("owner").textContent = c.titular || "";
+    $("avatar").textContent = iniciales(c.titular) || "?";
+    $("ownerBox").hidden = !c.titular;
+    $("btnTxt").textContent = "Copiar alias";
+    $("btnCopy").classList.remove("done");
+    if (CONFIG.whatsapp) $("btnWa").href = linkWa(c);
+    document.querySelectorAll("#seg button").forEach((b,k)=>b.setAttribute("aria-pressed", k===i ? "true" : "false"));
+  }
+  $("paidBox").hidden = !CONFIG.whatsapp;
+
+  if (CONFIG.cuentas.length > 1){
+    const seg = $("seg"); seg.hidden = false;
+    CONFIG.cuentas.forEach((c,i)=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = (c.titular || "").split(" ")[0] || ("Alias " + (i+1));
+      b.addEventListener("click", ()=>mostrar(i));
+      seg.appendChild(b);
+    });
+  }
+
+  function copiaFallback(txt){
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.setAttribute("readonly","");
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, txt.length);
+    let ok = false; try { ok = document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta); return ok;
+  }
+
+  let timer;
+  function avisar(ok){
+    $("toastTxt").textContent = ok ? "¡Copiado! Ahora pegalo en tu banco" : "Mantené apretado el alias para copiarlo";
+    $("toast").classList.add("show");
+    clearTimeout(timer); timer = setTimeout(()=>$("toast").classList.remove("show"), 2600);
+    if (ok){
+      $("btnTxt").textContent = "¡Alias copiado!";
+      $("btnCopy").classList.add("done");
+      if (navigator.vibrate) { try { navigator.vibrate(35); } catch(e){} }
+    }
+  }
+
+  $("btnCopy").addEventListener("click", async ()=>{
+    const txt = CONFIG.cuentas[actual].alias;
+    let ok = false;
+    try { if (navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(txt); ok = true; } } catch(e) {}
+    if (!ok) ok = copiaFallback(txt);
+    avisar(ok);
+    evento("copiar");
+  });
+  $("btnWa").addEventListener("click", ()=>evento("comprobante"));
+
+  mostrar(0);
+})();
+</script>
+</body>
+</html>
